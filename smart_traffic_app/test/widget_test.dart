@@ -1,30 +1,57 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+// test/widget_test.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_traffic_app/main.dart';
+import 'package:smart_traffic_app/theme_manager.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('SafeRoute Pro smoke test', (WidgetTester tester) async {
+    // Build our app with ThemeManager
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => ThemeManager(),
+        child: MyApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify app title appears
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.byIcon(Icons.home), findsOneWidget);
+    expect(find.byIcon(Icons.traffic), findsOneWidget);
+    expect(find.byIcon(Icons.local_hospital), findsOneWidget);
+    expect(find.byIcon(Icons.map), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify theme toggle button exists
+    expect(find.byIcon(Icons.light_mode), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Tap Traffic tab
+    await tester.tap(find.byIcon(Icons.traffic));
+    await tester.pumpAndSettle();
+
+    // Verify Traffic screen title
+    expect(find.text('Traffic'), findsOneWidget);
+
+    // Tap Emergency tab
+    await tester.tap(find.byIcon(Icons.local_hospital));
+    await tester.pumpAndSettle();
+
+    // Verify Emergency screen title
+    expect(find.text('Emergency'), findsOneWidget);
+
+    // Tap Map tab
+    await tester.tap(find.byIcon(Icons.map));
+    await tester.pumpAndSettle();
+
+    // Verify Map screen (GoogleMap widget)
+    expect(find.byType(GoogleMap), findsOneWidget);
+
+    // Tap theme toggle
+    await tester.tap(find.byIcon(Icons.light_mode));
+    await tester.pumpAndSettle();
+
+    // Verify dark mode toggle
+    expect(find.byIcon(Icons.dark_mode), findsOneWidget);
   });
 }
