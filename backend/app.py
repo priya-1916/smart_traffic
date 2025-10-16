@@ -1,8 +1,18 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from pymongo import MongoClient
+import time
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for Flutter app to communicate
+CORS(app)
+
+# Wait for MongoDB to start
+time.sleep(5)
+
+# Connect to MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client.traffic_db
+collection = db.traffic
 
 # Traffic data
 traffic_data = [
@@ -18,42 +28,17 @@ traffic_data = [
     {"road": "Ukkadam / Podanur Road", "vehicle_count": 70, "congestion": "High", "rain": False, "emergency": False}
 ]
 
+# Insert data only if collection is empty
+if collection.count_documents({}) == 0:
+    collection.insert_many(traffic_data)
+
 @app.route('/api/traffic', methods=['GET'])
 def get_traffic():
-    """Return all traffic data"""
-    return jsonify(traffic_data)
-
-@app.route('/api/traffic/emergency', methods=['GET'])
-def get_emergency_routes():
-    """Return only low congestion routes for emergency vehicles"""
-    emergency_routes = [road for road in traffic_data if road['congestion'] == 'Low']
-    return jsonify(emergency_routes)
-
-@app.route('/api/traffic/rain', methods=['GET'])
-def get_rain_alerts():
-    """Return roads with rain alerts"""
-    rain_roads = [road for road in traffic_data if road['rain'] == True]
-    return jsonify(rain_roads)
-
-@app.route('/api/traffic/high', methods=['GET'])
-def get_high_congestion():
-    """Return roads with high congestion"""
-    high_congestion = [road for road in traffic_data if road['congestion'] == 'High']
-    return jsonify(high_congestion)
+    return jsonify(list(collection.find({}, {"_id": 0})))
 
 @app.route('/', methods=['GET'])
 def home():
-    """API health check"""
-    return jsonify({
-        "status": "online",
-        "message": "Traffic Management API is running",
-        "endpoints": [
-            "/api/traffic",
-            "/api/traffic/emergency",
-            "/api/traffic/rain",
-            "/api/traffic/high"
-        ]
-    })
+    return jsonify({"status":"online","message":"Traffic API running"})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True,use_reloader=False)

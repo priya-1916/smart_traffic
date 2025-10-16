@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  mongo_db:
+    image: mongo:6.0
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: smart_traffic_backend
+    depends_on:
+      - mongo_db
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./smart_traffic_app
+    container_name: smart_traffic_frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo_db
+
+volumes:
+  mongo_data:

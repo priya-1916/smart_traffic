@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: Traffic API
+    type: marcusolsson-json-datasource
+    access: proxy
+    url: http://backend:5000/api/traffic
+    jsonData:
+      method: GET
+    editable: true

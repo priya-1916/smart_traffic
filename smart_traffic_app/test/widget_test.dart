@@ -1,7 +1,7 @@
 // test/widget_test.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_traffic_app/main.dart';
 import 'package:smart_traffic_app/theme_manager.dart';
@@ -44,8 +44,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.map));
     await tester.pumpAndSettle();
 
-    // Verify Map screen (GoogleMap widget)
-    expect(find.byType(GoogleMap), findsOneWidget);
+    // Verify Map screen (FlutterMap widget)
+    expect(find.byType(FlutterMap), findsOneWidget);  // ✅ Changed from GoogleMap
 
     // Tap theme toggle
     await tester.tap(find.byIcon(Icons.light_mode));

@@ -1,0 +1,4 @@
+Flask>=3.0
+Flask-Cors>=3.0
+pymongo>=4.5
+flask-pymongo>=3.0.1
