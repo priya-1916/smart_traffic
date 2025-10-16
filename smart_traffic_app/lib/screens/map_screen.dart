@@ -2,23 +2,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../services/api_service.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key}); // ✅ FIXED: Added key parameter
+  const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState(); // ✅ FIXED: Public State
+  State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   List<Marker> _markers = [];
-  bool _showTrafficLayer = true;
   bool isLoading = true;
-
-  // REPLACE WITH YOUR MAPBOX TOKEN
-  static const String _mapboxAccessToken = 'pk.eyJ1IjoicHJpeWExOSIsImEiOiJjbWdzMnRvY2szYm1lMmtxMXU5dG5kZ2ZsIn0.m9rD82mSS3ZYoGZBZ2eWQA'; // ← PASTE HERE!
 
   @override
   void initState() {
@@ -28,56 +23,57 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _loadMapData() async {
     setState(() => isLoading = true);
-    try {
-      var trafficData = await ApiService.fetchTraffic();
-      if (!mounted) return; // ✅ FIXED: BuildContext safety
-      
-      setState(() {
-        _markers = trafficData.map<Marker>((road) {
-          // ✅ FIXED: Use real lat/lng OR fallback coordinates
-          final lat = road['lat'] ?? 37.7749 + (trafficData.indexOf(road) * 0.01);
-          final lng = road['lng'] ?? -122.4194 + (trafficData.indexOf(road) * 0.01);
-          final position = LatLng(lat, lng);
-          
-          Color color = _getMarkerColor(road['congestion']);
-          return Marker(
-            point: position,
-            width: 40,
-            height: 40,
-            child: GestureDetector(
-              onTap: () => _showRoadInfo(road),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.location_pin, color: Colors.white, size: 20),
+
+    // Traffic data with precise coordinates for Coimbatore
+    final trafficData = [
+      {"road": "Avinashi Road", "lat": 11.024487, "lng": 77.007567, "vehicle_count": 85, "congestion": "High"},
+      {"road": "Trichy Road", "lat": 11.010000, "lng": 76.974000, "vehicle_count": 60, "congestion": "Medium"},
+      {"road": "Mettupalayam Road", "lat": 11.041000, "lng": 76.955000, "vehicle_count": 30, "congestion": "Low"},
+      {"road": "Peelamedu / ESI Road", "lat": 11.020000, "lng": 76.975000, "vehicle_count": 25, "congestion": "Low"},
+      {"road": "Race Course Road", "lat": 11.010500, "lng": 76.970000, "vehicle_count": 55, "congestion": "Medium"},
+      {"road": "Singanallur Road", "lat": 10.998000, "lng": 77.015000, "vehicle_count": 45, "congestion": "Medium"},
+      {"road": "Thadagam Road", "lat": 11.035000, "lng": 76.990000, "vehicle_count": 15, "congestion": "Low"},
+      {"road": "Gandhipuram", "lat": 11.016500, "lng": 76.955000, "vehicle_count": 90, "congestion": "High"},
+      {"road": "Saravanampatti Road", "lat": 11.030000, "lng": 76.990000, "vehicle_count": 50, "congestion": "Medium"},
+      {"road": "Ukkadam / Podanur Road", "lat": 10.996500, "lng": 76.960000, "vehicle_count": 70, "congestion": "High"},
+    ];
+
+    setState(() {
+      _markers = trafficData.map<Marker>((road) {
+        final position = LatLng(road['lat'] as double, road['lng'] as double);
+        Color color = _getMarkerColor(road['congestion'] as String);
+        return Marker(
+          point: position,
+          width: 40,
+          height: 40,
+          child: GestureDetector(
+            onTap: () => _showRoadInfo(road),
+            child: Container(
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
               ),
+              child: const Icon(Icons.location_pin, color: Colors.white, size: 20),
             ),
-          );
-        }).toList();
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e'))
+          ),
         );
-      }
-    }
+      }).toList();
+      isLoading = false;
+    });
   }
 
   Color _getMarkerColor(String congestion) {
     switch (congestion) {
-      case "High": return Colors.red;
-      case "Medium": return Colors.orange;
-      default: return Colors.green;
+      case "High":
+        return Colors.red;
+      case "Medium":
+        return Colors.orange;
+      default:
+        return Colors.green;
     }
   }
 
-  void _showRoadInfo(dynamic road) {
+  void _showRoadInfo(Map<String, dynamic> road) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -93,6 +89,18 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  void _zoomIn() {
+    final center = _mapController.camera.center;
+    final zoom = _mapController.camera.zoom;
+    if (zoom < 18) _mapController.move(center, zoom + 1);
+  }
+
+  void _zoomOut() {
+    final center = _mapController.camera.center;
+    final zoom = _mapController.camera.zoom;
+    if (zoom > 1) _mapController.move(center, zoom - 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,63 +112,67 @@ class _MapScreenState extends State<MapScreen> {
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter: const LatLng(37.7749, -122.4194), // San Francisco
-                initialZoom: 11.0,
-                onTap: (_, __) {}, // ✅ FIXED: Removed print
+                initialCenter: const LatLng(11.0168, 76.9558),
+                initialZoom: 12.0,
+                minZoom: 1.0,
+                maxZoom: 18.0,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
               ),
               children: [
-                // MapBox Tiles
+                // OpenStreetMap Tiles
                 TileLayer(
-                  urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}',
-                  additionalOptions: {
-                    'accessToken': _mapboxAccessToken,
-                    'id': 'streets-v12',
-                  },
+                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c'],
                 ),
-                // Traffic Overlay
-                if (_showTrafficLayer)
-                  TileLayer(
-                    urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}',
-                    additionalOptions: {
-                      'accessToken': _mapboxAccessToken,
-                      'id': 'mapbox-mapbox-traffic-v1',
-                    },
-                    // ✅ FIXED: Use TileLayerOptions with opacity
-                    tileProvider: NetworkTileProvider(),
-                  ),
-                // Markers
                 MarkerLayer(markers: _markers),
               ],
             ),
-          // Top Controls
+          // Top Controls: Center Map Button
           Positioned(
             top: 50,
             left: 16,
+            child: FloatingActionButton(
+              heroTag: "center",
+              mini: true,
+              onPressed: () => _mapController.move(const LatLng(11.0168, 76.9558), 12.0),
+              child: const Icon(Icons.my_location),
+            ),
+          ),
+          // Zoom Controls
+          Positioned(
+            bottom: 50,
             right: 16,
-            child: Row(
+            child: Column(
               children: [
                 FloatingActionButton(
-                  heroTag: "center",
+                  heroTag: "zoomIn",
                   mini: true,
-                  onPressed: () => _mapController.move(const LatLng(37.7749, -122.4194), 11.0),
-                  child: const Icon(Icons.my_location),
+                  onPressed: _zoomIn,
+                  child: const Icon(Icons.add),
                 ),
-                const Spacer(),
+                const SizedBox(height: 8),
                 FloatingActionButton(
-                  heroTag: "traffic",
+                  heroTag: "zoomOut",
                   mini: true,
-                  backgroundColor: _showTrafficLayer ? Colors.green : Colors.grey,
-                  onPressed: () => setState(() => _showTrafficLayer = !_showTrafficLayer),
-                  child: const Icon(Icons.traffic),
+                  onPressed: _zoomOut,
+                  child: const Icon(Icons.remove),
                 ),
               ],
             ),
           ),
+          // Refresh button at bottom-left
+          Positioned(
+            bottom: 50,
+            left: 16,
+            child: FloatingActionButton(
+              heroTag: "refresh",
+              onPressed: _loadMapData,
+              child: const Icon(Icons.refresh),
+            ),
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadMapData,
-        child: const Icon(Icons.refresh),
       ),
     );
   }

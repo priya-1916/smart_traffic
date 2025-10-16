@@ -65,6 +65,7 @@ class _TrafficScreenState extends State<TrafficScreen> {
                     child: ListTile(
                       contentPadding: EdgeInsets.all(16),
                       leading: CircleAvatar(
+                        // ignore: deprecated_member_use
                         backgroundColor: getColor(road['congestion']).withOpacity(0.2),
                         child: Icon(Icons.traffic, color: getColor(road['congestion'])),
                       ),
